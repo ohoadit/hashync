@@ -1,98 +1,157 @@
 import React, {useState, useCallback} from 'react';
-import {View, StyleSheet, ActivityIndicator, Keyboard, NativeModules, TouchableWithoutFeedback } from 'react-native';
+import {
+  View,
+  ScrollView,
+  StyleSheet,
+  ActivityIndicator,
+  Keyboard,
+  NativeModules,
+  TouchableWithoutFeedback,
+  KeyboardAvoidingView,
+} from 'react-native';
+import {getGenericPassword, resetGenericPassword} from 'react-native-keychain';
 import Input from '../../components/Input';
 import Button from '../../components/Button';
 
 const styles = StyleSheet.create({
-    formWrapper: {
-        width: '100%',
-        height: '80%',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        marginTop: '20%',
-    },
-    container: {
-        width: '100%',
-        height: '100%',
-        display: 'flex',
-        alignItems: 'center',
-        backgroundColor: '#fff',
-    },
+  container: {
+    flex: 1,
+    backgroundColor: '#fff',
+  },
+  formWrapper: {
+    flex: 1,
+    alignItems: 'center',
+    paddingTop: 50,
+  },
+  buttonContainer: {
+    flexDirection: 'row',
+    width: '80%',
+    alignItems: 'center',
+    justifyContent: 'space-around',
+  },
 });
 
 const crypto = NativeModules.Aes;
 
 const genHash = async () => {
-    console.log(await crypto.pbkdf2('asdasdasd', 'adsasdfadsasd', 10000, 128));
-}
+  console.log(await crypto.pbkdf2('asdasdasd', 'adsasdfadsasd', 10000, 128));
+};
 
 // const bf = new Blowfish('xda-developers', Blowfish.MODE.ECB);
 // const encoded = bf.encode(`bcbcbc`);
 // console.log(encoded);
 
+const AddNew = ({navigation}) => {
+  // console.log(navigation)
+  const [fields, setFields] = useState({
+    title: undefined,
+    secrets: [undefined],
+  });
 
-const AddNew = ({ navigation }) => {
-    // console.log(navigation)
-    const [fields, setFields] = useState({
-        title: undefined,
-        secret: undefined,
-    })
+  const [errors, setErrors] = useState({
+    title: undefined,
+    secrets: [undefined],
+  });
 
-    const [errors, setErrors] = useState({
-        title: undefined,
-        secret: undefined,
-    })
+  const [loader, setLoader] = useState(false);
 
-    const [loader, setLoader] = useState(false);
-
-    const onFieldChange = useCallback((name, value) => {
-        if (errors[`${name}`]) {
-            setErrors({...errors, [name]: undefined});
+  const onFieldChange = useCallback(
+    (name, value, index) => {
+      console.log({name, value, index});
+      if (errors[`${name}`]) {
+        if (typeof errors[`${name}`] === 'object') {
+          const currentError = [...errors[`${name}`]];
+          currentError[index] = undefined;
+          setErrors({
+            ...errors,
+            [name]: currentError,
+          });
+        } else {
+          setErrors({...errors, [name]: undefined});
         }
+      }
+      if (typeof fields[`${name}`] === 'object') {
+        const currentField = [...fields[name]];
+        currentField[index] = value;
         setFields({
-            ...fields,
-            [name]: value,
-        })
-    }, [fields, setFields, errors, setErrors]);
+          ...fields,
+          [name]: currentField,
+        });
+      } else {
+        setFields({
+          ...fields,
+          [name]: value,
+        });
+      }
+    },
+    [fields, setFields, errors, setErrors],
+  );
 
-    const onSave = useCallback(() => {
-        
-    }, [errors, setErrors, setLoader]);
+  const addField = () => {};
 
-    return (
-        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-        <View style={styles.container}>
-        <View style={styles.formWrapper}>
-                <Input
-                    value={fields.title}
-                    error={errors.title}
-                    placeholder="Title"
-                    name="title"
-                    onFieldChange={onFieldChange}
-                />
-                <Input
-                    password
-                    value={fields.secret}
-                    placeholder="Secret Text"
-                    error={errors.secret}
-                    name="secret"
-                    onFieldChange={onFieldChange}
-                />
-                <Button
-                    title="Save Data"
-                    theme="#3f51b5"
-                    width='80%'
-                    // disabled={disabled}
-                    onPress={onSave}
-                />
-                <View style={{ marginTop: 25 }}>
-                    <ActivityIndicator animating={loader} color="#3f51b5" size="large" />
-                </View>
+  const onSave = useCallback(async () => {
+    const token = await getGenericPassword();
+    const errorKeys = {};
+    console.log(fields);
+    // Object.entries(fields).forEach(([key, value]) => {
+    //   console.log({key, value});
+    //   if (!value) {
+    //     errorKeys[`${key}`] = 'This field is required';
+    //   } else {
+    //     if (typeof value === 'object') {
+    //     }
+    //   }
+    // });
+    // setErrors(errorKeys);
+  }, [fields, errors, setErrors, setLoader]);
+
+  return (
+    <KeyboardAvoidingView style={styles.container} behavior={'height'}>
+      <TouchableWithoutFeedback onPress={Keyboard.dismiss} touchSoundDisabled>
+        <ScrollView>
+          <View style={styles.formWrapper}>
+            <Input
+              value={fields.title}
+              error={errors.title}
+              placeholder="Title"
+              name="title"
+              onFieldChange={onFieldChange}
+            />
+            <Input
+              password
+              value={fields.secrets[0]}
+              placeholder="Secret Text"
+              error={errors.secrets[0]}
+              index={0}
+              name="secrets"
+              onFieldChange={onFieldChange}
+            />
+            <View style={styles.buttonContainer}>
+              <Button
+                title="Add More"
+                theme="#e91e63"
+                width="40%"
+                // disabled={disabled}
+                onPress={addField}
+              />
+              <Button
+                title="Save"
+                theme="#2196f3"
+                width="40%"
+                disabled={loader}
+                onPress={onSave}
+              />
             </View>
-        </View>
-        </TouchableWithoutFeedback>
-    )
-}
+            <ActivityIndicator
+              animating={loader}
+              color="#3f51b5"
+              size="large"
+            />
+          </View>
+        </ScrollView>
+      </TouchableWithoutFeedback>
+    </KeyboardAvoidingView>
+  );
+};
 
 export default AddNew;
