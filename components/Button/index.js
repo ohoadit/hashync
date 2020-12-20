@@ -1,39 +1,67 @@
 import React from 'react';
-import {Alert, StyleSheet, Pressable, Text} from 'react-native';
-import styled from 'styled-components/native';
+import {StyleSheet, Pressable, Text} from 'react-native';
 
-const getButtonColor = (disabled, color) => (disabled ? '#fdfdfd' : color);
+const getButtonStyles = function (type, theme, width, disabled, styling) {
+  if (type === 'text') {
+    return {
+      backgroundColor: 'transparent',
+      width: width || 100,
+      opacity: disabled ? 0.5 : 1,
+      marginVertical: 5,
+      elevation: 0,
+      ...styling,
+    };
+  } else {
+    return {
+      backgroundColor: theme || '#880cef',
+      width: width || 100,
+      opacity: disabled ? 0.5 : 1,
+      ...styling,
+    };
+  }
+};
 
-//
-
-const Contained = styled.Pressable`
-  width: ${({width}) => width || '100px'};
-  height: 45px;
-  align-items: center;
-  background-color: ${({theme}) =>
-    typeof theme === 'string' ? theme : '#efefef'};
-  margin: 35px 0px;
-  justify-content: center;
-  opacity: ${({disabled}) => (disabled ? 0.5 : 1)};
-  elevation: ${({disabled}) => (disabled ? 2 : 5)};
-  border-radius: 5px;
-`;
-const ButtonText = styled.Text`
-  color: ${({textColor}) => textColor || '#fff'};
-  font-size: 16px;
-  font-weight: 500;
-`;
-
-const Button = ({title, textColor, theme, width, onPress, disabled}) => (
-  <Contained
-    theme={theme}
-    width={width}
+const Button = ({
+  title,
+  type,
+  textColor,
+  theme,
+  width,
+  onPress,
+  disabled,
+  styling,
+}) => (
+  <Pressable
     onPress={onPress}
+    style={{
+      ...styles.buttonBody,
+      ...getButtonStyles(type, theme, width, disabled, styling),
+    }}
     disabled={disabled}
     android_ripple={{color: '#d1d1d1'}}>
-    <ButtonText disabled={disabled} textColor={textColor}>
+    <Text
+      disabled={disabled}
+      style={{
+        ...styles.buttonText,
+        color: textColor || '#fff',
+        fontSize: type === 'text' ? 14 : 16,
+      }}>
       {title}
-    </ButtonText>
-  </Contained>
+    </Text>
+  </Pressable>
 );
+
+const styles = StyleSheet.create({
+  buttonBody: {
+    height: 45,
+    marginVertical: 35,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 5,
+    elevation: 5,
+  },
+  buttonText: {
+    fontWeight: '500',
+  },
+});
 export default Button;

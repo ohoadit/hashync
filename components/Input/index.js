@@ -80,7 +80,6 @@ const Input = ({
           }}
           secureTextEntry={password}
           spellCheck={false}
-          onSelectionChange={() => console.log('changed')}
           selectionColor={error ? '#ef5350' : '#3f51b5'}
           onBlur={onBlur}
           onFocus={onFocus}
