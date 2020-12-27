@@ -19,6 +19,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     marginBottom: 5,
     color: '#000',
+    fontWeight: '500',
   },
   errorContainer: {
     display: 'flex',

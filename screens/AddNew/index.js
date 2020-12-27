@@ -1,10 +1,11 @@
-import React, {useState, useCallback} from 'react';
+import React, {useState, useCallback, useRef} from 'react';
 import {
   View,
   ScrollView,
   StyleSheet,
   ActivityIndicator,
   Keyboard,
+  StatusBar,
   NativeModules,
   TouchableWithoutFeedback,
   KeyboardAvoidingView,
@@ -42,29 +43,31 @@ const styles = StyleSheet.create({
   },
   modalWrapper: {
     display: 'flex',
-    // marginTop: 50,
-    // zIndex: 1,
-    // backgroundColor: '#101010',
+    width: '100%',
+    height: '100%',
     alignItems: 'center',
+    padding: 20,
     justifyContent: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
   },
-  modalContainer: {
+  modalCard: {
     display: 'flex',
+    width: '100%',
+    // padding: '10%',
     backgroundColor: '#fff',
-    width: '90%',
-    height: '50%',
   },
 });
 
 const crypto = NativeModules.Aes;
 
-const genHash = async () => {
-  console.log(await crypto.pbkdf2('asdasdasd', 'adsasdfadsasd', 10000, 128));
+const genRandomchars = () => {
+  const chrs = Math.random().toString(16).substr(2);
+  if (chrs === '') {
+    return genRandomchars();
+  } else {
+    return chrs;
+  }
 };
-
-const bf = new Blowfish('xda-developers', Blowfish.MODE.ECB);
-const encoded = bf.encode('bcbcbc');
-console.log(encoded);
 
 const AddNew = ({navigation}) => {
   // console.log(navigation)
@@ -79,11 +82,21 @@ const AddNew = ({navigation}) => {
   });
 
   const [loader, setLoader] = useState(false);
+  const [modal, setModal] = useState(false);
+  const [topLevelError, setTopLevelError] = useState(undefined);
+  const [topLevelKey, setTopLevelKey] = useState(undefined);
 
-  const [modal, setModal] = useState(true);
+  const scrollRef = useRef();
 
   const onFieldChange = useCallback(
     (name, value, index) => {
+      if (!name) {
+        if (topLevelError) {
+          setTopLevelError(undefined);
+        }
+        setTopLevelKey(value);
+        return;
+      }
       if (errors[`${name}`]) {
         if (typeof errors[`${name}`] === 'object') {
           const currentError = [...errors[`${name}`]];
@@ -181,8 +194,9 @@ const AddNew = ({navigation}) => {
     [fields, errors, onFieldChange, deleteField],
   );
 
-  const onSave = useCallback(async () => {
+  const onSubmit = useCallback(async () => {
     const errorKeys = {};
+    Keyboard.dismiss();
     let shouldModalOpen = true;
     Object.entries(fields).forEach(([key, value]) => {
       if (typeof value === 'object') {
@@ -208,30 +222,76 @@ const AddNew = ({navigation}) => {
     if (!shouldModalOpen) {
       setErrors(errorKeys);
     } else {
-      const token = await getGenericPassword();
-      const config = {
-        headers: {
-          accept: 'application/json',
-          'Content-Type': 'application/json',
-          auth: token.password,
-        },
-      };
-      const body = {
-        title: fields.title,
-        secrets: fields.secrets,
-        blob: encoded,
-      };
-      api
-        .post('/entity', body, config)
-        .then((res) => console.log(res))
-        .catch((err) => Alert.alert('Error', err.response.data.msg));
+      setModal(shouldModalOpen);
     }
   }, [fields, errors, setErrors]);
 
+  const onSave = async () => {
+    if (topLevelError) {
+      setTopLevelError(undefined);
+    }
+    const authToken = await getGenericPassword();
+    const config = {
+      headers: {
+        accept: 'application/json',
+        'Content-Type': 'application/json',
+        auth: authToken.password,
+      },
+    };
+    api
+      .post('/appkey/verify', {key: topLevelKey}, config)
+      .then(async (result) => {
+        console.log(result.data);
+        if (result.data.msg === 'success') {
+          setModal(false);
+          setLoader(true);
+          const blob = `${genRandomchars()}${genRandomchars()}${genRandomchars()}${genRandomchars()}`;
+          const hash = await crypto.pbkdf2(
+            topLevelKey,
+            blob,
+            Number(result.data.payload),
+            256,
+          );
+          const bf = new Blowfish(hash, Blowfish.MODE.ECB);
+          const body = {
+            title: fields.title,
+            secrets: fields.secrets.map((value) => ({
+              secret: bf.encode(value),
+              blob,
+            })),
+          };
+          console.log(body);
+          api
+            .post('/entity', body, config)
+            .then((res) => {
+              const d = new Uint8Array(res.data.a.data);
+              console.log(typeof bf.decode(d));
+              setLoader(false);
+            })
+            .catch((err) => {
+              Alert.alert('Error', err.response.data.msg || err.message);
+              setLoader(false);
+            });
+        }
+      })
+      .catch((err) => setTopLevelError(err.response.data.msg || err.message));
+  };
+
   return (
     <KeyboardAvoidingView style={styles.container} behavior={'height'}>
+      {modal && (
+        <StatusBar
+          barStyle="dark-content"
+          backgroundColor="rgba(0, 0, 0, 0.7)"
+        />
+      )}
       <TouchableWithoutFeedback onPress={Keyboard.dismiss} touchSoundDisabled>
-        <ScrollView>
+        <ScrollView
+          keyboardShouldPersistTaps="handled"
+          ref={scrollRef}
+          onContentSizeChange={() =>
+            scrollRef.current.scrollToEnd({animated: true})
+          }>
           <View style={styles.formWrapper}>
             <Input
               value={fields.title}
@@ -258,15 +318,15 @@ const AddNew = ({navigation}) => {
                 title="Add More"
                 theme="#e91e63"
                 width="40%"
-                // disabled={disabled}
+                disabled={loader}
                 onPress={addField}
               />
               <Button
                 title="Save"
-                theme="#2196f3"
+                theme="#3f51b5"
                 width="40%"
                 disabled={loader}
-                onPress={onSave}
+                onPress={onSubmit}
               />
             </View>
             <ActivityIndicator
@@ -275,13 +335,34 @@ const AddNew = ({navigation}) => {
               size="large"
             />
           </View>
-          {/* <Modal transparent visible={modal}>
-            <View style={styles.modalWrapper}>
-            <Card styling={styles.modalContainer}>
-              <Text>This is modal</Text>
-            </Card>
+          <Modal transparent visible={modal}>
+            {/* <KeyboardAvoidingView behavior={'height'}> */}
+            <View style={styles.modalWrapper} onPress={() => setModal(false)}>
+              <Card styling={styles.modalCard} wrapper>
+                <Input
+                  value={topLevelKey}
+                  error={topLevelError}
+                  placeholder="Please enter your key"
+                  onFieldChange={onFieldChange}
+                />
+                <View style={styles.buttonContainer}>
+                  <Button
+                    title="Close"
+                    theme="#e91e63"
+                    width="40%"
+                    onPress={() => setModal(false)}
+                  />
+                  <Button
+                    title="Confirm"
+                    theme="#3f51b5"
+                    width="40%"
+                    onPress={onSave}
+                  />
+                </View>
+              </Card>
             </View>
-          </Modal> */}
+            {/* </KeyboardAvoidingView> */}
+          </Modal>
         </ScrollView>
       </TouchableWithoutFeedback>
     </KeyboardAvoidingView>
