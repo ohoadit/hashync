@@ -6,7 +6,7 @@ import {createStackNavigator} from '@react-navigation/stack';
 import {appbarStyle} from './styles/appbar';
 import Login from './screens/Login';
 import {getGenericPassword, resetGenericPassword} from 'react-native-keychain';
-import AddNew from './screens/AddNew';
+import Entity from './screens/Entity';
 import Dashboard from './screens/Dashboard';
 import Loading from './screens/Loading';
 
@@ -43,7 +43,13 @@ export default function App() {
       return (
         <>
           <Screen name="Dashboard" component={Dashboard} />
-          <Screen name="Add" component={AddNew} />
+          <Screen
+            name="Entity"
+            component={Entity}
+            options={({route}) => ({
+              title: route.params ? 'View Entity' : 'Add Entity',
+            })}
+          />
           <Screen name="Login" component={Login} />
         </>
       );
@@ -56,7 +62,13 @@ export default function App() {
             component={Dashboard}
             options={{headerLeft: null}}
           />
-          <Screen name="Add" component={AddNew} />
+          <Screen
+            name="Entity"
+            component={Entity}
+            options={({route}) => ({
+              title: route.params ? 'View Entity' : 'Add Entity',
+            })}
+          />
         </>
       );
     }

@@ -1,4 +1,4 @@
-import React, {useState, useCallback, useRef} from 'react';
+import React, {useState, useCallback, useRef, useEffect} from 'react';
 import {
   View,
   ScrollView,
@@ -10,7 +10,6 @@ import {
   TouchableWithoutFeedback,
   KeyboardAvoidingView,
   Modal,
-  Text,
   Alert,
 } from 'react-native';
 import Blowfish from 'egoroof-blowfish';
@@ -69,7 +68,18 @@ const genRandomchars = () => {
   }
 };
 
-const AddNew = ({navigation}) => {
+const getConfigHeaders = async () => {
+  const authToken = await getGenericPassword();
+  return {
+    headers: {
+      accept: 'application/json',
+      'Content-Type': 'application/json',
+      auth: authToken.password,
+    },
+  };
+};
+
+const Entity = ({route, navigation}) => {
   // console.log(navigation)
   const [fields, setFields] = useState({
     title: undefined,
@@ -80,6 +90,8 @@ const AddNew = ({navigation}) => {
     title: undefined,
     secrets: [undefined],
   });
+
+  const [mode, setMode] = useState('ADD');
 
   const [loader, setLoader] = useState(false);
   const [modal, setModal] = useState(false);
@@ -172,22 +184,25 @@ const AddNew = ({navigation}) => {
               error={errors.secrets[ind + 1]}
               index={ind + 1}
               name="secrets"
+              disabled={mode === 'VIEW'}
               onFieldChange={onFieldChange}
             />
-            <Button
-              type="text"
-              title="Remove"
-              textColor="#f44336"
-              styling={{
-                position: 'absolute',
-                top: -1,
-                right: 45,
-                width: 'auto',
-                height: 35,
-                paddingHorizontal: 10,
-              }}
-              onPress={deleteField(ind + 1)}
-            />
+            {mode !== 'VIEW' && (
+              <Button
+                type="text"
+                title="Remove"
+                textColor="#f44336"
+                styling={{
+                  position: 'absolute',
+                  top: -1,
+                  right: 45,
+                  width: 'auto',
+                  height: 35,
+                  paddingHorizontal: 10,
+                }}
+                onPress={deleteField(ind + 1)}
+              />
+            )}
           </View>
         );
       }),
@@ -230,16 +245,8 @@ const AddNew = ({navigation}) => {
     if (topLevelError) {
       setTopLevelError(undefined);
     }
-    const authToken = await getGenericPassword();
-    const config = {
-      headers: {
-        accept: 'application/json',
-        'Content-Type': 'application/json',
-        auth: authToken.password,
-      },
-    };
     api
-      .post('/appkey/verify', {key: topLevelKey}, config)
+      .post('/appkey/verify', {key: topLevelKey}, await getConfigHeaders())
       .then(async (result) => {
         console.log(result.data);
         if (result.data.msg === 'success') {
@@ -262,20 +269,45 @@ const AddNew = ({navigation}) => {
           };
           console.log(body);
           api
-            .post('/entity', body, config)
+            .post('/entity/new', body, await getConfigHeaders())
             .then((res) => {
-              const d = new Uint8Array(res.data.a.data);
-              console.log(typeof bf.decode(d));
+              console.log(res.data);
               setLoader(false);
             })
             .catch((err) => {
-              Alert.alert('Error', err.response.data.msg || err.message);
+              Alert.alert('Error', err.response?.data?.msg || err.message);
               setLoader(false);
             });
         }
       })
-      .catch((err) => setTopLevelError(err.response.data.msg || err.message));
+      .catch((err) => {
+        console.error(err);
+        setTopLevelError(err.response?.data?.msg || err.message);
+      });
   };
+
+  useEffect(() => {
+    if (route.params) {
+      setMode('VIEW');
+      const {entityId} = route.params;
+      (async () => {
+        try {
+          const res = await api.get(
+            `/entity/${entityId}`,
+            await getConfigHeaders(),
+          );
+          console.log(res.data);
+        } catch (err) {
+          Alert.alert('Error', err.response?.data?.msg || err.message, [
+            {
+              text: 'Okay',
+              onPress: () => navigation.navigate('Dashboard'),
+            },
+          ]);
+        }
+      })();
+    }
+  }, []);
 
   return (
     <KeyboardAvoidingView style={styles.container} behavior={'height'}>
@@ -298,6 +330,7 @@ const AddNew = ({navigation}) => {
               error={errors.title}
               placeholder="Title"
               name="title"
+              disabled={mode === 'VIEW'}
               onFieldChange={onFieldChange}
             />
             <Input
@@ -309,26 +342,29 @@ const AddNew = ({navigation}) => {
               error={errors.secrets[0]}
               index={0}
               name="secrets"
+              disabled={mode === 'VIEW'}
               onFieldChange={onFieldChange}
             />
             {fields.secrets.length > 1 &&
               renderMoreFields(fields.secrets.length)}
-            <View style={styles.buttonContainer}>
-              <Button
-                title="Add More"
-                theme="#e91e63"
-                width="40%"
-                disabled={loader}
-                onPress={addField}
-              />
-              <Button
-                title="Save"
-                theme="#3f51b5"
-                width="40%"
-                disabled={loader}
-                onPress={onSubmit}
-              />
-            </View>
+            {mode !== 'VIEW' && (
+              <View style={styles.buttonContainer}>
+                <Button
+                  title="Add More"
+                  theme="#e91e63"
+                  width="40%"
+                  disabled={loader}
+                  onPress={addField}
+                />
+                <Button
+                  title="Save"
+                  theme="#3f51b5"
+                  width="40%"
+                  disabled={loader}
+                  onPress={onSubmit}
+                />
+              </View>
+            )}
             <ActivityIndicator
               animating={loader}
               color="#3f51b5"
@@ -369,4 +405,4 @@ const AddNew = ({navigation}) => {
   );
 };
 
-export default AddNew;
+export default Entity;

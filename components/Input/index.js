@@ -52,7 +52,7 @@ const Input = ({
   error,
   placeholder,
   password,
-  array,
+  disabled,
   index,
 }) => {
   const onChange = useCallback((val) => onFieldChange(name, val, index), [
@@ -79,6 +79,7 @@ const Input = ({
             ...styles.input,
             borderColor: setColor(active, error, '#dedede'),
           }}
+          editable={!disabled}
           secureTextEntry={password}
           spellCheck={false}
           selectionColor={error ? '#ef5350' : '#3f51b5'}

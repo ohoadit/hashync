@@ -14,6 +14,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: 5,
+    backgroundColor: '#fff',
     marginTop: 30,
     marginBottom: 10,
     marginHorizontal: 20,
@@ -22,15 +23,15 @@ const styles = StyleSheet.create({
   },
 });
 
-const Card = ({id, styling, wrapper, children}) => {
+const Card = ({id, styling, wrapper, children, onPress}) => {
   return (
     <Pressable
       android_ripple={{color: '#d1d1d1'}}
       style={{
         ...styles.card,
-        backgroundColor: prepareCardColor(),
         ...styling,
       }}
+      onPress={onPress}
       android_disableSound={wrapper}
       disabled={wrapper}>
       {children}

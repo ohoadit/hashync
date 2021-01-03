@@ -1,5 +1,15 @@
-import React, {useEffect, useState} from 'react';
-import {View, Text, StyleSheet, Pressable, FlatList, Modal} from 'react-native';
+import React, {useCallback, useEffect, useState} from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  Pressable,
+  FlatList,
+  SafeAreaView,
+  StatusBar,
+} from 'react-native';
+import {getGenericPassword} from 'react-native-keychain';
+import api from '../../utils/api';
 import Card from '../../components/Card';
 
 const dataSource = [
@@ -17,19 +27,60 @@ const dataSource = [
   },
 ];
 
-const Dashboard = ({navigation}) => {
-  const renderCards = (data) => (
-    <Card styling={styles.card}>
-      <Text style={styles.cardTitle}>{data.item.name}</Text>
+const Dashboard = ({navigation, route}) => {
+  const [data, setData] = useState(dataSource);
+  const [loader, setLoader] = useState(false);
+
+  const openEntity = useCallback(
+    (entityId) => () => {
+      console.log(entityId);
+      navigation.navigate('Entity', {
+        entityId,
+      });
+    },
+    [navigation],
+  );
+
+  const renderCards = (cardData) => (
+    <Card styling={styles.card} onPress={openEntity(cardData.item._id)}>
+      <Text style={styles.cardTitle}>{cardData.item.title}</Text>
     </Card>
   );
 
-  const openAddNewActivity = () => navigation.navigate('Add');
+  const openAddNewActivity = () => navigation.navigate('Entity');
+
+  const pushNewEntity = () => {};
+
+  useEffect(() => {
+    (async () => {
+      setLoader(true);
+      const authToken = await getGenericPassword();
+      const config = {
+        headers: {
+          accept: 'application/json',
+          'Content-Type': 'application/json',
+          auth: authToken.password,
+        },
+      };
+      const res = await api.get('/entities/all', config);
+      setData(res.data);
+      setLoader(false);
+    })();
+  }, []);
 
   return (
     <View style={styles.screen}>
       <View style={styles.container}>
-        <FlatList numColumns={2} data={dataSource} renderItem={renderCards} />
+        {loader ? (
+          <Text>Loading items ...</Text>
+        ) : (
+          <FlatList
+            numColumns={2}
+            data={data}
+            renderItem={renderCards}
+            keyExtractor={(item) => item._id}
+          />
+        )}
       </View>
       <Pressable
         style={styles.fab}
@@ -77,7 +128,7 @@ const styles = StyleSheet.create({
   },
   cardTitle: {
     fontSize: 16,
-    color: '#fff',
+    color: '#000',
     fontWeight: 'bold',
   },
 });
