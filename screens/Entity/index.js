@@ -9,15 +9,17 @@ import {
   NativeModules,
   TouchableWithoutFeedback,
   KeyboardAvoidingView,
-  Modal,
   Alert,
 } from 'react-native';
+import {Modal, HelperText, TextInput} from 'react-native-paper';
 import Blowfish from 'egoroof-blowfish';
 import {getGenericPassword, resetGenericPassword} from 'react-native-keychain';
 import Card from '../../components/Card';
 import Input from '../../components/Input';
+import {Button as CustomButton} from 'react-native-paper';
 import Button from '../../components/Button';
 import api from '../../utils/api';
+import {Checkbox} from 'react-native-paper';
 
 const styles = StyleSheet.create({
   container: {
@@ -30,6 +32,7 @@ const styles = StyleSheet.create({
     paddingTop: 50,
   },
   buttonContainer: {
+    marginTop: 25,
     flexDirection: 'row',
     width: '80%',
     alignItems: 'center',
@@ -41,19 +44,22 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   modalWrapper: {
-    display: 'flex',
-    width: '100%',
-    height: '100%',
+    flex: 1,
     alignItems: 'center',
     padding: 20,
     justifyContent: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    // backgroundColor: 'rgba(0, 0, 0, 0.7)',
   },
   modalCard: {
     display: 'flex',
     width: '100%',
     // padding: '10%',
     backgroundColor: '#fff',
+  },
+  modalInput: {
+    width: '90%',
+    fontSize: 14,
+    backgroundColor: 'transparent',
   },
 });
 
@@ -79,6 +85,12 @@ const getConfigHeaders = async () => {
   };
 };
 
+const verifyAppKey = async (key) => {
+  console.log(key);
+  const res = await api.post('/appkey/verify', {key}, await getConfigHeaders());
+  return res;
+};
+
 const Entity = ({route, navigation}) => {
   // console.log(navigation)
   const [fields, setFields] = useState({
@@ -99,6 +111,9 @@ const Entity = ({route, navigation}) => {
   const [topLevelKey, setTopLevelKey] = useState(undefined);
 
   const scrollRef = useRef();
+
+  const activeFieldIndex = useRef();
+  const timeOutRef = useRef();
 
   const onFieldChange = useCallback(
     (name, value, index) => {
@@ -137,6 +152,58 @@ const Entity = ({route, navigation}) => {
     },
     [fields, setFields, errors, setErrors],
   );
+
+  const toggleFieldValue = useCallback(
+    (fieldIndex) => () => {
+      activeFieldIndex.current = fieldIndex;
+      setModal(true);
+    },
+    [activeFieldIndex],
+  );
+
+  const viewFieldData = async () => {
+    if (topLevelError) {
+      setTopLevelKey(undefined);
+      setTopLevelError(undefined);
+    }
+    try {
+      const result = await verifyAppKey(topLevelKey);
+      if (result.data.msg === 'success') {
+        const tempSecrets = [...fields.secrets];
+        const required = JSON.parse(tempSecrets[activeFieldIndex.current]);
+        const hash = await crypto.pbkdf2(
+          topLevelKey,
+          required.blob,
+          Number(result.data.payload),
+          256,
+        );
+        const blowfish = new Blowfish(hash, Blowfish.MODE.ECB);
+        tempSecrets[activeFieldIndex.current] = blowfish.decode(
+          new Uint8Array(required.secret.data),
+        );
+        setFields({...fields, secrets: tempSecrets});
+        setModal(false);
+        setTopLevelKey(undefined);
+        if (timeOutRef.current) {
+          clearTimeout(timeOutRef.current);
+        }
+        timeOutRef.current = setTimeout(() => {
+          navigation.goBack();
+        }, 7000);
+        // setFields();
+      }
+    } catch (err) {
+      console.error(err);
+      setTopLevelError(err.response?.data?.msg || err.message);
+    }
+  };
+
+  const closeModal = () => {
+    activeFieldIndex.current = null;
+    setTopLevelError(undefined);
+    setTopLevelKey(undefined);
+    setModal(false);
+  };
 
   const addField = () => {
     const secrets = [...fields.secrets];
@@ -178,7 +245,9 @@ const Entity = ({route, navigation}) => {
         return (
           <View style={styles.inputContainer} key={ind}>
             <Input
-              password
+              password={
+                mode === 'VIEW' ? activeFieldIndex.current !== ind + 1 : true
+              }
               value={fields.secrets[ind + 1]}
               placeholder={`Secret Text - ${ind + 2}`}
               error={errors.secrets[ind + 1]}
@@ -187,6 +256,17 @@ const Entity = ({route, navigation}) => {
               disabled={mode === 'VIEW'}
               onFieldChange={onFieldChange}
             />
+            {mode === 'VIEW' && (
+              <Checkbox.Item
+                status={
+                  activeFieldIndex.current === ind + 1 ? 'checked' : 'unchecked'
+                }
+                label="View Secret Text"
+                theme="#880cef"
+                color="#3f51b5"
+                onPress={toggleFieldValue(ind + 1)}
+              />
+            )}
             {mode !== 'VIEW' && (
               <Button
                 type="text"
@@ -206,7 +286,7 @@ const Entity = ({route, navigation}) => {
           </View>
         );
       }),
-    [fields, errors, onFieldChange, deleteField],
+    [fields, errors, mode, onFieldChange, deleteField, toggleFieldValue],
   );
 
   const onSubmit = useCallback(async () => {
@@ -245,8 +325,7 @@ const Entity = ({route, navigation}) => {
     if (topLevelError) {
       setTopLevelError(undefined);
     }
-    api
-      .post('/appkey/verify', {key: topLevelKey}, await getConfigHeaders())
+    verifyAppKey(topLevelKey)
       .then(async (result) => {
         console.log(result.data);
         if (result.data.msg === 'success') {
@@ -259,11 +338,11 @@ const Entity = ({route, navigation}) => {
             Number(result.data.payload),
             256,
           );
-          const bf = new Blowfish(hash, Blowfish.MODE.ECB);
+          const blowF = new Blowfish(hash, Blowfish.MODE.ECB);
           const body = {
             title: fields.title,
             secrets: fields.secrets.map((value) => ({
-              secret: bf.encode(value),
+              secret: blowF.encode(value),
               blob,
             })),
           };
@@ -289,6 +368,7 @@ const Entity = ({route, navigation}) => {
   useEffect(() => {
     if (route.params) {
       setMode('VIEW');
+      setLoader(true);
       const {entityId} = route.params;
       (async () => {
         try {
@@ -296,7 +376,17 @@ const Entity = ({route, navigation}) => {
             `/entity/${entityId}`,
             await getConfigHeaders(),
           );
-          console.log(res.data);
+          const {title, secrets} = res.data.data;
+          setFields({
+            title: title || '',
+            secrets: secrets.map((sec, i) => {
+              if (i > 0) {
+                errors.secrets.push(undefined);
+              }
+              return JSON.stringify(sec);
+            }),
+          });
+          console.log(fields);
         } catch (err) {
           Alert.alert('Error', err.response?.data?.msg || err.message, [
             {
@@ -305,103 +395,112 @@ const Entity = ({route, navigation}) => {
             },
           ]);
         }
+        setLoader(false);
       })();
     }
   }, []);
 
   return (
-    <KeyboardAvoidingView style={styles.container} behavior={'height'}>
-      {modal && (
-        <StatusBar
-          barStyle="dark-content"
-          backgroundColor="rgba(0, 0, 0, 0.7)"
-        />
-      )}
-      <TouchableWithoutFeedback onPress={Keyboard.dismiss} touchSoundDisabled>
-        <ScrollView
-          keyboardShouldPersistTaps="handled"
-          ref={scrollRef}
-          onContentSizeChange={() =>
-            scrollRef.current.scrollToEnd({animated: true})
-          }>
-          <View style={styles.formWrapper}>
-            <Input
-              value={fields.title}
-              error={errors.title}
-              placeholder="Title"
-              name="title"
-              disabled={mode === 'VIEW'}
-              onFieldChange={onFieldChange}
-            />
-            <Input
-              password
-              value={fields.secrets[0]}
-              placeholder={
-                fields.secrets.length > 1 ? 'Secret Text - 1' : 'Secret Text'
-              }
-              error={errors.secrets[0]}
-              index={0}
-              name="secrets"
-              disabled={mode === 'VIEW'}
-              onFieldChange={onFieldChange}
-            />
-            {fields.secrets.length > 1 &&
-              renderMoreFields(fields.secrets.length)}
-            {mode !== 'VIEW' && (
-              <View style={styles.buttonContainer}>
-                <Button
-                  title="Add More"
-                  theme="#e91e63"
-                  width="40%"
-                  disabled={loader}
-                  onPress={addField}
+    <>
+      <KeyboardAvoidingView style={styles.container} behavior={'height'}>
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss} touchSoundDisabled>
+          <ScrollView
+            keyboardShouldPersistTaps="handled"
+            ref={scrollRef}
+            onContentSizeChange={() =>
+              scrollRef.current.scrollToEnd({animated: true})
+            }>
+            <View style={styles.formWrapper}>
+              <Input
+                value={fields.title}
+                error={errors.title}
+                placeholder="Title"
+                name="title"
+                disabled={mode === 'VIEW'}
+                onFieldChange={onFieldChange}
+              />
+              <Input
+                password={
+                  mode === 'VIEW' ? activeFieldIndex.current !== 0 : true
+                }
+                value={fields.secrets[0]}
+                placeholder={
+                  fields.secrets.length > 1 ? 'Secret Text - 1' : 'Secret Text'
+                }
+                error={errors.secrets[0]}
+                index={0}
+                name="secrets"
+                disabled={mode === 'VIEW'}
+                onFieldChange={onFieldChange}
+              />
+              {mode === 'VIEW' && (
+                <Checkbox.Item
+                  status={
+                    activeFieldIndex.current === 0 ? 'checked' : 'unchecked'
+                  }
+                  label="View Secret Text"
+                  color="#880cef"
+                  onPress={toggleFieldValue(0)}
                 />
-                <Button
-                  title="Save"
-                  theme="#3f51b5"
-                  width="40%"
-                  disabled={loader}
-                  onPress={onSubmit}
-                />
-              </View>
-            )}
-            <ActivityIndicator
-              animating={loader}
-              color="#3f51b5"
-              size="large"
-            />
-          </View>
-          <Modal transparent visible={modal}>
-            {/* <KeyboardAvoidingView behavior={'height'}> */}
-            <View style={styles.modalWrapper} onPress={() => setModal(false)}>
-              <Card styling={styles.modalCard} wrapper>
-                <Input
-                  value={topLevelKey}
-                  error={topLevelError}
-                  placeholder="Please enter your key"
-                  onFieldChange={onFieldChange}
-                />
+              )}
+              {fields.secrets.length > 1 &&
+                renderMoreFields(fields.secrets.length)}
+              {mode !== 'VIEW' && (
                 <View style={styles.buttonContainer}>
                   <Button
-                    title="Close"
+                    title="Add More"
                     theme="#e91e63"
                     width="40%"
-                    onPress={() => setModal(false)}
+                    disabled={loader}
+                    onPress={addField}
                   />
                   <Button
-                    title="Confirm"
+                    title="Save"
                     theme="#3f51b5"
                     width="40%"
-                    onPress={onSave}
+                    disabled={loader}
+                    onPress={onSubmit}
                   />
                 </View>
-              </Card>
+              )}
+              <ActivityIndicator
+                animating={loader}
+                color="#880cef"
+                size="large"
+              />
             </View>
-            {/* </KeyboardAvoidingView> */}
-          </Modal>
-        </ScrollView>
-      </TouchableWithoutFeedback>
-    </KeyboardAvoidingView>
+          </ScrollView>
+        </TouchableWithoutFeedback>
+      </KeyboardAvoidingView>
+      <Modal visible={modal} contentContainerStyle={styles.modalWrapper}>
+        <Card styling={styles.modalCard} wrapper>
+          <TextInput
+            value={topLevelKey}
+            type="flat"
+            style={styles.modalInput}
+            error={topLevelError}
+            label="Please enter your key"
+            secureTextEntry
+            onChangeText={(val) => onFieldChange(undefined, val)}
+          />
+          {topLevelError && (
+            <HelperText type="error" visible>
+              {topLevelError}
+            </HelperText>
+          )}
+          <View style={styles.buttonContainer}>
+            <CustomButton mode="outlined" onPress={closeModal}>
+              Close
+            </CustomButton>
+            <CustomButton
+              mode="contained"
+              onPress={mode === 'VIEW' ? viewFieldData : onSave}>
+              {mode === 'VIEW' ? 'Show' : 'Confirm'}
+            </CustomButton>
+          </View>
+        </Card>
+      </Modal>
+    </>
   );
 };
 

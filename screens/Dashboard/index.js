@@ -49,23 +49,28 @@ const Dashboard = ({navigation, route}) => {
 
   const openAddNewActivity = () => navigation.navigate('Entity');
 
-  const pushNewEntity = () => {};
-
-  useEffect(() => {
-    (async () => {
-      setLoader(true);
-      const authToken = await getGenericPassword();
-      const config = {
-        headers: {
-          accept: 'application/json',
-          'Content-Type': 'application/json',
-          auth: authToken.password,
-        },
-      };
+  const fetchEntities = async () => {
+    setLoader(true);
+    const authToken = await getGenericPassword();
+    const config = {
+      headers: {
+        accept: 'application/json',
+        'Content-Type': 'application/json',
+        auth: authToken.password,
+      },
+    };
+    try {
       const res = await api.get('/entities/all', config);
+      console.log(res);
       setData(res.data);
       setLoader(false);
-    })();
+    } catch (err) {
+      setLoader(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchEntities();
   }, []);
 
   return (
@@ -76,6 +81,7 @@ const Dashboard = ({navigation, route}) => {
         ) : (
           <FlatList
             numColumns={2}
+            // onRefresh={fetchEntities}
             data={data}
             renderItem={renderCards}
             keyExtractor={(item) => item._id}
@@ -125,11 +131,14 @@ const styles = StyleSheet.create({
   card: {
     width: '40%',
     paddingVertical: 45,
+    elevation: 0,
+    borderColor: '#dfdfdf',
+    borderStyle: 'solid',
+    borderWidth: 1,
   },
   cardTitle: {
     fontSize: 16,
     color: '#000',
-    fontWeight: 'bold',
   },
 });
 

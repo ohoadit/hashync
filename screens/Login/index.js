@@ -102,7 +102,7 @@ const Login = ({navigation}) => {
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
       <View style={styles.container}>
-        <Card styling={styles.formWrapper}>
+        <Card styling={styles.formWrapper} wrapper>
           <Input
             value={fieldValues.username}
             error={errors.username}
