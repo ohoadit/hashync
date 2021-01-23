@@ -11,6 +11,7 @@ import Card from '../../components/Card';
 import Input from '../../components/Input';
 import Button from '../../components/Button';
 import api from '../../utils/api';
+import colors from '../../colors';
 import {setGenericPassword} from 'react-native-keychain';
 
 const styles = StyleSheet.create({
@@ -87,7 +88,6 @@ const Login = ({navigation}) => {
     };
     try {
       const res = await api.post('/auth/login', fieldValues, config);
-      console.log(res.data);
       if (res.data === 'success') {
         await setGenericPassword('authToken', `${res.headers.auth}`);
         setLoader(false);
@@ -120,8 +120,8 @@ const Login = ({navigation}) => {
           />
           <Button
             title="LOG IN"
-            theme="#3f51b5"
-            width="80%"
+            theme={colors.primary}
+            customStyle={{width: '80%'}}
             disabled={loader}
             onPress={onLogInPressed}
           />
@@ -129,7 +129,7 @@ const Login = ({navigation}) => {
           {loader && (
             <ActivityIndicator
               animating={loader}
-              color="#3f51b5"
+              color={colors.primary}
               size="large"
             />
           )}

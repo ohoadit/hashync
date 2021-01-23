@@ -272,7 +272,7 @@ const Entity = ({route, navigation}) => {
                 type="text"
                 title="Remove"
                 textColor="#f44336"
-                styling={{
+                customStyle={{
                   position: 'absolute',
                   top: -1,
                   right: 45,
@@ -450,14 +450,14 @@ const Entity = ({route, navigation}) => {
                   <Button
                     title="Add More"
                     theme="#e91e63"
-                    width="40%"
+                    customStyle={{width: '40%'}}
                     disabled={loader}
                     onPress={addField}
                   />
                   <Button
                     title="Save"
                     theme="#3f51b5"
-                    width="40%"
+                    customStyle={{width: '40%'}}
                     disabled={loader}
                     onPress={onSubmit}
                   />

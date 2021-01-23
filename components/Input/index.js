@@ -1,5 +1,6 @@
 import React, {useState, useCallback, memo} from 'react';
 import {View, Text, StyleSheet, TextInput} from 'react-native';
+import colors from '../../colors';
 
 const styles = StyleSheet.create({
   inputContainer: {
@@ -28,17 +29,17 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-start',
   },
   errorText: {
-    color: '#ef5350',
+    color: colors.error,
     fontSize: 14,
   },
 });
 
 const setColor = (active, error, color) => {
   if (error) {
-    return '#ef5350';
+    return colors.error;
   }
   if (active) {
-    return '#3f51b5';
+    return colors.primary;
   }
   if (!active) {
     return color;
@@ -82,7 +83,7 @@ const Input = ({
           editable={!disabled}
           secureTextEntry={password}
           spellCheck={false}
-          selectionColor={error ? '#ef5350' : '#3f51b5'}
+          selectionColor={error ? colors.error : colors.primary}
           onBlur={onBlur}
           onFocus={onFocus}
         />
