@@ -33,9 +33,9 @@ const Dashboard = ({navigation, route}) => {
 
   const openEntity = useCallback(
     (entityId) => () => {
-      console.log(entityId);
       navigation.navigate('Entity', {
         entityId,
+        title: 'Add Entity',
       });
     },
     [navigation],
@@ -61,7 +61,6 @@ const Dashboard = ({navigation, route}) => {
     };
     try {
       const res = await api.get('/entities/all', config);
-      console.log(res);
       setData(res.data);
       setLoader(false);
     } catch (err) {

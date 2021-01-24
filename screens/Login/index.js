@@ -13,50 +13,47 @@ import Button from '../../components/Button';
 import api from '../../utils/api';
 import colors from '../../colors';
 import {setGenericPassword} from 'react-native-keychain';
+import {Headline} from 'react-native-paper';
 
 const styles = StyleSheet.create({
   formWrapper: {
     width: '80%',
     backgroundColor: '#fff',
-    // height: '80%',
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
+    // display: 'flex',
+    // flexDirection: 'column',
+    // alignItems: 'center',
   },
   container: {
     width: '100%',
+    paddingTop: '25%',
     height: '100%',
     display: 'flex',
     alignItems: 'center',
-    justifyContent: 'center',
     backgroundColor: '#fff',
   },
 });
 
-const Login = ({navigation}) => {
-  const [fieldValues, setFieldValues] = useState({
-    username: undefined,
-    password: undefined,
-  });
+const initialValues = {
+  username: undefined,
+  password: undefined,
+};
 
-  const [errors, setErrors] = useState({
-    username: undefined,
-    password: undefined,
-  });
+const Login = ({navigation}) => {
+  const [fieldValues, setFieldValues] = useState(initialValues);
+
+  const [errors, setErrors] = useState(initialValues);
 
   const [loader, setLoader] = useState(false);
 
   const onFieldChange = useCallback(
     (name, value) => {
-      if (errors[`${name}`]) {
-        setErrors({...errors, [name]: undefined});
+      if (errors[name]) {
+        errors[name] = undefined;
       }
-      setFieldValues({
-        ...fieldValues,
-        [name]: value,
-      });
+      fieldValues[name] = value;
+      // console.log(fieldValues);
     },
-    [fieldValues, setFieldValues, errors, setErrors],
+    [fieldValues, errors],
   );
 
   const onLogInPressed = useCallback(async () => {
@@ -102,18 +99,20 @@ const Login = ({navigation}) => {
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
       <View style={styles.container}>
+        <Headline>Let's get started</Headline>
         <Card styling={styles.formWrapper} wrapper>
           <Input
             value={fieldValues.username}
             error={errors.username}
-            placeholder="Username"
+            label="Username"
             name="username"
+            customStyle={{width: '90%'}}
             onFieldChange={onFieldChange}
           />
           <Input
             password
             value={fieldValues.password}
-            placeholder="Password"
+            label="Password"
             error={errors.password}
             name="password"
             onFieldChange={onFieldChange}

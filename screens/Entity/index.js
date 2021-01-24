@@ -86,13 +86,11 @@ const getConfigHeaders = async () => {
 };
 
 const verifyAppKey = async (key) => {
-  console.log(key);
   const res = await api.post('/appkey/verify', {key}, await getConfigHeaders());
   return res;
 };
 
 const Entity = ({route, navigation}) => {
-  // console.log(navigation)
   const [fields, setFields] = useState({
     title: undefined,
     secrets: [undefined],
@@ -249,7 +247,7 @@ const Entity = ({route, navigation}) => {
                 mode === 'VIEW' ? activeFieldIndex.current !== ind + 1 : true
               }
               value={fields.secrets[ind + 1]}
-              placeholder={`Secret Text - ${ind + 2}`}
+              label={`Secret Text - ${ind + 2}`}
               error={errors.secrets[ind + 1]}
               index={ind + 1}
               name="secrets"
@@ -327,7 +325,6 @@ const Entity = ({route, navigation}) => {
     }
     verifyAppKey(topLevelKey)
       .then(async (result) => {
-        console.log(result.data);
         if (result.data.msg === 'success') {
           setModal(false);
           setLoader(true);
@@ -346,11 +343,9 @@ const Entity = ({route, navigation}) => {
               blob,
             })),
           };
-          console.log(body);
           api
             .post('/entity/new', body, await getConfigHeaders())
             .then((res) => {
-              console.log(res.data);
               setLoader(false);
             })
             .catch((err) => {
@@ -386,7 +381,6 @@ const Entity = ({route, navigation}) => {
               return JSON.stringify(sec);
             }),
           });
-          console.log(fields);
         } catch (err) {
           Alert.alert('Error', err.response?.data?.msg || err.message, [
             {
@@ -414,7 +408,7 @@ const Entity = ({route, navigation}) => {
               <Input
                 value={fields.title}
                 error={errors.title}
-                placeholder="Title"
+                label="Title"
                 name="title"
                 disabled={mode === 'VIEW'}
                 onFieldChange={onFieldChange}
@@ -424,7 +418,7 @@ const Entity = ({route, navigation}) => {
                   mode === 'VIEW' ? activeFieldIndex.current !== 0 : true
                 }
                 value={fields.secrets[0]}
-                placeholder={
+                label={
                   fields.secrets.length > 1 ? 'Secret Text - 1' : 'Secret Text'
                 }
                 error={errors.secrets[0]}
@@ -449,14 +443,13 @@ const Entity = ({route, navigation}) => {
                 <View style={styles.buttonContainer}>
                   <Button
                     title="Add More"
-                    theme="#e91e63"
+                    type="outlined"
                     customStyle={{width: '40%'}}
                     disabled={loader}
                     onPress={addField}
                   />
                   <Button
                     title="Save"
-                    theme="#3f51b5"
                     customStyle={{width: '40%'}}
                     disabled={loader}
                     onPress={onSubmit}

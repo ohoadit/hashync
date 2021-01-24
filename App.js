@@ -9,12 +9,11 @@ import {getGenericPassword, resetGenericPassword} from 'react-native-keychain';
 import Entity from './screens/Entity';
 import Dashboard from './screens/Dashboard';
 import Loading from './screens/Loading';
+import colors from './colors';
 
 const Stack = createStackNavigator();
 
 const {Navigator, Screen} = Stack;
-
-const screens = {};
 
 export default function App() {
   const [auth, setAuth] = useState(false);
@@ -25,7 +24,6 @@ export default function App() {
       const credentials = await getGenericPassword();
 
       if (credentials) {
-        console.log(credentials);
         setAuth(true);
       }
       setLoader(false);
@@ -36,27 +34,41 @@ export default function App() {
     if (loader) {
       return (
         <Screen
-          name="Hashync"
+          name="loading"
           component={Loading}
-          options={{title: null, headerStyle: {elevation: 0}}}
+          options={{title: 'Hashync', headerStyle: {elevation: 0}}}
         />
       );
     } else if (auth) {
       return (
         <>
+          <Screen name="Dashboard" component={Dashboard} />
+          <Screen
+            name="Entity"
+            component={Entity}
+            options={({route}) => ({
+              title: route.params?.title || 'View Entity',
+            })}
+          />
+          <Screen name="Login" component={Login} options={{title: 'Hashync'}} />
+        </>
+      );
+    } else {
+      return (
+        <>
+          <Screen name="Login" component={Login} options={{title: 'Hashync'}} />
           <Screen
             name="Dashboard"
             component={Dashboard}
-            options={{headerLeft: null}}
+            options={{headerLeft: 'hide'}}
           />
           <Screen
             name="Entity"
             component={Entity}
             options={({route}) => ({
-              title: route.params ? 'View Entity' : 'Add Entity',
+              title: route.params?.title || 'View Entity',
             })}
           />
-          <Screen name="Hashync" component={Login} />
         </>
       );
     }
@@ -64,11 +76,11 @@ export default function App() {
 
   return (
     <NavigationContainer>
-      <StatusBar backgroundColor="#4400a6" />
+      <StatusBar backgroundColor={colors.tintColor} />
       <Navigator
+        detachInactiveScreens
         screenOptions={{
           header: (props) => {
-            console.log(JSON.stringify(props.scene));
             return <MaterialAppbar {...props} />;
           },
         }}>

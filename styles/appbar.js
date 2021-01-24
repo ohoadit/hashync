@@ -1,7 +1,7 @@
 export const appbarStyle = {
   headerStyle: {
     backgroundColor: '#fff',
-    elevation: 0,
+    elevation: 10,
   },
   headerTitleStyle: {
     color: '#404b69',

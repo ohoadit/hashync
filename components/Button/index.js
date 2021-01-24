@@ -1,6 +1,6 @@
 import React from 'react';
 import {Button as MaterialButton} from 'react-native-paper';
-import {StyleSheet, Pressable, Text} from 'react-native';
+import {StyleSheet} from 'react-native';
 
 // const getButtonStyles = function (type, theme, width, disabled, styling) {
 //   if (type === 'text') {

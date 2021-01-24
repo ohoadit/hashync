@@ -1,5 +1,6 @@
-import React, {useState, useCallback, memo} from 'react';
-import {View, Text, StyleSheet, TextInput} from 'react-native';
+import React, {useState, useCallback, memo, useEffect} from 'react';
+import {View, StyleSheet} from 'react-native';
+import {TextInput, HelperText} from 'react-native-paper';
 import colors from '../../colors';
 
 const styles = StyleSheet.create({
@@ -7,92 +8,63 @@ const styles = StyleSheet.create({
     display: 'flex',
     width: '80%',
     marginVertical: 7,
-    fontSize: 16,
   },
   input: {
-    fontSize: 18,
-    color: '#404b69',
-    display: 'flex',
-    alignItems: 'center',
-    borderBottomWidth: 2,
-  },
-  title: {
     fontSize: 16,
-    marginBottom: 5,
-    color: '#000',
-    fontWeight: '500',
-  },
-  errorContainer: {
-    display: 'flex',
-    width: '80%',
-    flexDirection: 'row',
-    justifyContent: 'flex-start',
-  },
-  errorText: {
-    color: colors.error,
-    fontSize: 14,
+    color: '#404b69',
+    backgroundColor: '#fff',
   },
 });
-
-const setColor = (active, error, color) => {
-  if (error) {
-    return colors.error;
-  }
-  if (active) {
-    return colors.primary;
-  }
-  if (!active) {
-    return color;
-  }
-};
 
 const Input = ({
   onFieldChange,
   name,
   value,
   error,
-  placeholder,
+  label,
   password,
   disabled,
   index,
 }) => {
-  const onChange = useCallback((val) => onFieldChange(name, val, index), [
-    name,
-    onFieldChange,
-    index,
-  ]);
+  const [fieldValue, setFieldValue] = useState(value);
+  const [errorText, setErrorText] = useState(error);
 
-  const [active, setActive] = useState(false);
+  const onChange = useCallback(
+    (val) => {
+      setFieldValue(val);
+      setErrorText(null);
+      onFieldChange(name, val, index);
+    },
+    [name, onFieldChange, index],
+  );
 
-  const onFocus = useCallback(() => setActive(true), [setActive]);
-  const onBlur = useCallback(() => setActive(false), [setActive]);
+  useEffect(() => setErrorText(error), [error]);
+
+  useEffect(() => {
+    setFieldValue(value);
+    console.log('In here');
+  }, [value]);
 
   return (
     <>
       <View style={styles.inputContainer}>
-        <Text style={{...styles.title, color: setColor(active, error, '#000')}}>
-          {placeholder}
-        </Text>
         <TextInput
           onChangeText={onChange}
-          value={value}
-          style={{
-            ...styles.input,
-            borderColor: setColor(active, error, '#dedede'),
-          }}
+          value={fieldValue}
+          style={styles.input}
           editable={!disabled}
+          autoCapitalize="none"
           secureTextEntry={password}
           spellCheck={false}
-          selectionColor={error ? colors.error : colors.primary}
-          onBlur={onBlur}
-          onFocus={onFocus}
+          error={!!errorText}
+          label={label}
         />
+        {errorText && (
+          <HelperText type="error" visible>
+            {errorText}
+          </HelperText>
+        )}
       </View>
-      {error && (
-        <View style={styles.errorContainer}>
-          <Text style={styles.errorText}>{error}</Text>
-        </View>
-      )}
     </>
   );
 };

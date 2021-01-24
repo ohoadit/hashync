@@ -1,12 +1,5 @@
 import React from 'react';
-import {Pressable, Text, StyleSheet} from 'react-native';
-
-const prepareCardColor = () => {
-  const color = `rgb(${Math.random() * 205}, ${Math.random() * 205}, ${
-    Math.random() * 205
-  })`;
-  return color;
-};
+import {Pressable, StyleSheet} from 'react-native';
 
 const styles = StyleSheet.create({
   card: {
