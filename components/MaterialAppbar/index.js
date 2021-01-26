@@ -1,6 +1,6 @@
 import React from 'react';
 import {Appbar} from 'react-native-paper';
-import {resetGenericPassword} from 'react-native-keychain';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 function MaterialAppbar({navigation, previous, scene}) {
   const openAddNewScreen = React.useCallback(() => {
@@ -8,8 +8,8 @@ function MaterialAppbar({navigation, previous, scene}) {
   }, [navigation]);
 
   const logout = React.useCallback(async () => {
-    if (await resetGenericPassword()) {
-      navigation.pop();
+    if (await AsyncStorage.removeItem('authToken')) {
+      navigation.navigate('Login');
     }
   }, [navigation]);
 

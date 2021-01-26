@@ -35,14 +35,13 @@ const Input = ({
       setErrorText(null);
       onFieldChange(name, val, index);
     },
-    [name, onFieldChange, index],
+    [name, onFieldChange, index, setFieldValue, setErrorText],
   );
 
   useEffect(() => setErrorText(error), [error]);
 
   useEffect(() => {
     setFieldValue(value);
-    console.log('In here');
   }, [value]);
 
   return (

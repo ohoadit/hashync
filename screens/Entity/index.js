@@ -5,7 +5,6 @@ import {
   StyleSheet,
   ActivityIndicator,
   Keyboard,
-  StatusBar,
   NativeModules,
   TouchableWithoutFeedback,
   KeyboardAvoidingView,
@@ -13,7 +12,7 @@ import {
 } from 'react-native';
 import {Modal, HelperText, TextInput} from 'react-native-paper';
 import Blowfish from 'egoroof-blowfish';
-import {getGenericPassword, resetGenericPassword} from 'react-native-keychain';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import Card from '../../components/Card';
 import Input from '../../components/Input';
 import {Button as CustomButton} from 'react-native-paper';
@@ -75,12 +74,12 @@ const genRandomchars = () => {
 };
 
 const getConfigHeaders = async () => {
-  const authToken = await getGenericPassword();
+  const authToken = await AsyncStorage.getItem('authToken');
   return {
     headers: {
       accept: 'application/json',
       'Content-Type': 'application/json',
-      auth: authToken.password,
+      auth: authToken,
     },
   };
 };
@@ -347,6 +346,7 @@ const Entity = ({route, navigation}) => {
             .post('/entity/new', body, await getConfigHeaders())
             .then((res) => {
               setLoader(false);
+              navigation.navigate('Dashboard');
             })
             .catch((err) => {
               Alert.alert('Error', err.response?.data?.msg || err.message);

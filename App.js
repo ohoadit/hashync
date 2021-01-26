@@ -1,15 +1,20 @@
 // import 'react-native-gesture-handler';
 import React, {useCallback, useEffect, useState} from 'react';
-import {StatusBar, View, ActivityIndicator} from 'react-native';
+import {StatusBar} from 'react-native';
 import {NavigationContainer} from '@react-navigation/native';
 import {createStackNavigator} from '@react-navigation/stack';
 import MaterialAppbar from './components/MaterialAppbar';
 import Login from './screens/Login';
-import {getGenericPassword, resetGenericPassword} from 'react-native-keychain';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import Entity from './screens/Entity';
 import Dashboard from './screens/Dashboard';
 import Loading from './screens/Loading';
 import colors from './colors';
+
+export const AuthContext = React.createContext({
+  auth: null,
+  setAuth: () => {},
+});
 
 const Stack = createStackNavigator();
 
@@ -21,8 +26,7 @@ export default function App() {
 
   useEffect(() => {
     (async () => {
-      const credentials = await getGenericPassword();
-
+      const credentials = await AsyncStorage.getItem('authToken');
       if (credentials) {
         setAuth(true);
       }

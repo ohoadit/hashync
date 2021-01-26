@@ -7,10 +7,14 @@ import {
   FlatList,
   SafeAreaView,
   StatusBar,
+  RefreshControl,
+  Alert,
 } from 'react-native';
-import {getGenericPassword} from 'react-native-keychain';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
 import api from '../../utils/api';
 import Card from '../../components/Card';
+import colors from '../../colors';
 
 const dataSource = [
   {
@@ -30,6 +34,7 @@ const dataSource = [
 const Dashboard = ({navigation, route}) => {
   const [data, setData] = useState(dataSource);
   const [loader, setLoader] = useState(false);
+  const [refresh, setRefresh] = useState(false);
 
   const openEntity = useCallback(
     (entityId) => () => {
@@ -49,27 +54,35 @@ const Dashboard = ({navigation, route}) => {
 
   const openAddNewActivity = () => navigation.navigate('Entity');
 
-  const fetchEntities = async () => {
-    setLoader(true);
-    const authToken = await getGenericPassword();
+  const fetchEntities = (state = false) => async () => {
+    if (state) {
+      setRefresh(true);
+    } else {
+      setLoader(true);
+    }
+    const authToken = await AsyncStorage.getItem('authToken');
     const config = {
       headers: {
         accept: 'application/json',
         'Content-Type': 'application/json',
-        auth: authToken.password,
+        auth: authToken,
       },
     };
     try {
       const res = await api.get('/entities/all', config);
       setData(res.data);
-      setLoader(false);
     } catch (err) {
+      Alert.alert('Error', err.message);
+    }
+    if (state) {
+      setRefresh(false);
+    } else {
       setLoader(false);
     }
   };
 
   useEffect(() => {
-    fetchEntities();
+    fetchEntities(false)();
   }, []);
 
   return (
@@ -80,8 +93,14 @@ const Dashboard = ({navigation, route}) => {
         ) : (
           <FlatList
             numColumns={2}
-            // onRefresh={fetchEntities}
             data={data}
+            refreshControl={
+              <RefreshControl
+                colors={[colors.primary]}
+                onRefresh={fetchEntities(true)}
+                refreshing={refresh}
+              />
+            }
             renderItem={renderCards}
             keyExtractor={(item) => item._id}
           />
@@ -110,22 +129,6 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
     alignItems: 'center',
-  },
-  fab: {
-    position: 'absolute',
-    bottom: 55,
-    right: 30,
-    height: 60,
-    width: 60,
-    borderRadius: 30,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#e91e63',
-    elevation: 5,
-  },
-  fabText: {
-    fontSize: 35,
-    color: '#ffffff',
   },
   card: {
     width: '40%',

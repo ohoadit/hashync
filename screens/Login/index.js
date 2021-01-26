@@ -12,7 +12,7 @@ import Input from '../../components/Input';
 import Button from '../../components/Button';
 import api from '../../utils/api';
 import colors from '../../colors';
-import {setGenericPassword} from 'react-native-keychain';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import {Headline} from 'react-native-paper';
 
 const styles = StyleSheet.create({
@@ -39,9 +39,9 @@ const initialValues = {
 };
 
 const Login = ({navigation}) => {
-  const [fieldValues, setFieldValues] = useState(initialValues);
+  const [fieldValues, setFieldValues] = useState({...initialValues});
 
-  const [errors, setErrors] = useState(initialValues);
+  const [errors, setErrors] = useState({...initialValues});
 
   const [loader, setLoader] = useState(false);
 
@@ -86,7 +86,7 @@ const Login = ({navigation}) => {
     try {
       const res = await api.post('/auth/login', fieldValues, config);
       if (res.data === 'success') {
-        await setGenericPassword('authToken', `${res.headers.auth}`);
+        await AsyncStorage.setItem('authToken', `${res.headers.auth}`);
         setLoader(false);
         navigation.navigate('Dashboard');
       }
@@ -94,7 +94,7 @@ const Login = ({navigation}) => {
       Alert.alert('Error', err.response.data.msg);
       setLoader(false);
     }
-  }, [navigation, fieldValues, errors, setErrors]);
+  }, [navigation, fieldValues, setErrors]);
 
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
