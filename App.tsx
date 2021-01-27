@@ -11,10 +11,12 @@ import Dashboard from './screens/Dashboard';
 import Loading from './screens/Loading';
 import colors from './colors';
 
-export const AuthContext = React.createContext({
-  auth: null,
-  setAuth: () => {},
-});
+const initialValue: Object = {
+  auth: false,
+  changeAuthState: () => {},
+};
+
+export const AuthContext = React.createContext(initialValue);
 
 const Stack = createStackNavigator();
 
@@ -78,18 +80,25 @@ export default function App() {
     }
   }, [auth, loader]);
 
+  const changeAuthState = (authState) => {
+    setAuth(authState);
+  };
+
   return (
     <NavigationContainer>
-      <StatusBar backgroundColor={colors.tintColor} />
-      <Navigator
-        detachInactiveScreens
-        screenOptions={{
-          header: (props) => {
-            return <MaterialAppbar {...props} />;
-          },
-        }}>
-        {setScreens()}
-      </Navigator>
+      <AuthContext.Provider
+        value={{auth: auth, changeAuthState: changeAuthState}}>
+        <StatusBar backgroundColor={colors.tintColor} />
+        <Navigator
+          detachInactiveScreens
+          screenOptions={{
+            header: (props) => {
+              return <MaterialAppbar {...props} />;
+            },
+          }}>
+          {setScreens()}
+        </Navigator>
+      </AuthContext.Provider>
     </NavigationContainer>
   );
 }
