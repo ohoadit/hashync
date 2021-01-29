@@ -37,6 +37,7 @@ export default function App() {
   }, []);
 
   const setScreens = useCallback(() => {
+    console.log('Here');
     if (loader) {
       return (
         <Screen
@@ -56,18 +57,13 @@ export default function App() {
               title: route.params?.title || 'View Entity',
             })}
           />
-          <Screen name="Login" component={Login} options={{title: 'Hashync'}} />
+          {/* <Screen name="Login" component={Login} options={{title: 'Hashync'}} /> */}
         </>
       );
     } else {
       return (
         <>
           <Screen name="Login" component={Login} options={{title: 'Hashync'}} />
-          <Screen
-            name="Dashboard"
-            component={Dashboard}
-            options={{headerLeft: 'hide'}}
-          />
           <Screen
             name="Entity"
             component={Entity}

@@ -22,12 +22,24 @@ import {StyleSheet} from 'react-native';
 //   }
 // };
 
-const Button = ({title, type, theme, onPress, disabled, customStyle}) => (
+const Button = ({
+  title,
+  type,
+  theme,
+  color,
+  onPress,
+  disabled,
+  customStyle,
+}) => (
   <MaterialButton
     onPress={onPress}
+    color={color}
     style={
       customStyle ? {...styles.buttonBody, ...customStyle} : styles.buttonBody
     }
+    compact={type === 'text'}
+    labelStyle={{fontSize: 16}}
+    uppercase={false}
     disabled={disabled}
     mode={type || 'contained'}>
     {title}
@@ -37,6 +49,7 @@ const Button = ({title, type, theme, onPress, disabled, customStyle}) => (
 const styles = StyleSheet.create({
   buttonBody: {
     marginVertical: 35,
+    fontSize: 24,
     borderRadius: 5,
   },
 });

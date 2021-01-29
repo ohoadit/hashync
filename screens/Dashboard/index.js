@@ -5,8 +5,6 @@ import {
   StyleSheet,
   Pressable,
   FlatList,
-  SafeAreaView,
-  StatusBar,
   RefreshControl,
   Alert,
 } from 'react-native';

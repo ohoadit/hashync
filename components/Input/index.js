@@ -10,7 +10,8 @@ const styles = StyleSheet.create({
     marginVertical: 7,
   },
   input: {
-    fontSize: 16,
+    fontSize: 18,
+    height: 75,
     color: '#404b69',
     backgroundColor: '#fff',
   },

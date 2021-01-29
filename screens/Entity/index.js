@@ -268,11 +268,11 @@ const Entity = ({route, navigation}) => {
               <Button
                 type="text"
                 title="Remove"
-                textColor="#f44336"
+                color="#f44336"
                 customStyle={{
                   position: 'absolute',
-                  top: -1,
-                  right: 45,
+                  top: -15,
+                  right: 35,
                   width: 'auto',
                   height: 35,
                   paddingHorizontal: 10,

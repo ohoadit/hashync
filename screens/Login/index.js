@@ -6,14 +6,17 @@ import {
   Alert,
   ActivityIndicator,
   TouchableWithoutFeedback,
+  KeyboardAvoidingView,
 } from 'react-native';
 import Card from '../../components/Card';
 import Input from '../../components/Input';
 import Button from '../../components/Button';
 import api from '../../utils/api';
 import colors from '../../colors';
+import {AuthContext} from '../../App';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {Headline} from 'react-native-paper';
+import {ScrollView} from 'react-native-gesture-handler';
 
 const styles = StyleSheet.create({
   formWrapper: {
@@ -56,86 +59,99 @@ const Login = ({navigation}) => {
     [fieldValues, errors],
   );
 
-  const onLogInPressed = useCallback(async () => {
-    Keyboard.dismiss();
-    const errorKeys = {};
-    Object.keys(fieldValues).forEach((field) => {
-      const val = fieldValues[`${field}`];
-      // console.log(val);
-      if (!val) {
-        return (errorKeys[`${field}`] = 'This field is required');
-      }
-      if (field === 'password' && val.length < 8) {
-        errorKeys[`${field}`] = 'Minimum 8 characters are required';
-      }
-    });
+  const onLogInPressed = useCallback(
+    async (changeAuthState) => {
+      Keyboard.dismiss();
+      const errorKeys = {};
+      Object.keys(fieldValues).forEach((field) => {
+        const val = fieldValues[`${field}`];
+        // console.log(val);
+        if (!val) {
+          return (errorKeys[`${field}`] = 'This field is required');
+        }
+        if (field === 'password' && val.length < 8) {
+          errorKeys[`${field}`] = 'Minimum 8 characters are required';
+        }
+      });
 
-    if (Object.keys(errorKeys).length !== 0) {
-      setErrors(errorKeys);
-      return;
-    }
-    setLoader(true);
-    setErrors(errorKeys);
-    // console.log(errors);
-    const config = {
-      headers: {
-        accept: 'application/json',
-        'Content-Type': 'application/json',
-      },
-    };
-    try {
-      const res = await api.post('/auth/login', fieldValues, config);
-      if (res.data === 'success') {
-        await AsyncStorage.setItem('authToken', `${res.headers.auth}`);
-        setLoader(false);
-        navigation.navigate('Dashboard');
+      if (Object.keys(errorKeys).length !== 0) {
+        setErrors(errorKeys);
+        return;
       }
-    } catch (err) {
-      Alert.alert('Error', err.response.data.msg);
-      setLoader(false);
-    }
-  }, [navigation, fieldValues, setErrors]);
+      setLoader(true);
+      setErrors(errorKeys);
+      const config = {
+        headers: {
+          accept: 'application/json',
+          'Content-Type': 'application/json',
+        },
+      };
+      try {
+        const res = await api.post('/auth/login', fieldValues, config);
+        if (res.data === 'success') {
+          await AsyncStorage.setItem('authToken', `${res.headers.auth}`);
+          setLoader(false);
+          changeAuthState(true);
+          navigation.navigate('Dashboard');
+        }
+      } catch (err) {
+        Alert.alert('Error', err.response.data.msg);
+        setLoader(false);
+      }
+    },
+    [navigation, fieldValues, setErrors],
+  );
 
   return (
-    <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-      <View style={styles.container}>
-        <Headline>Let's get started</Headline>
-        <Card styling={styles.formWrapper} wrapper>
-          <Input
-            value={fieldValues.username}
-            error={errors.username}
-            label="Username"
-            name="username"
-            customStyle={{width: '90%'}}
-            onFieldChange={onFieldChange}
-          />
-          <Input
-            password
-            value={fieldValues.password}
-            label="Password"
-            error={errors.password}
-            name="password"
-            onFieldChange={onFieldChange}
-          />
-          <Button
-            title="LOG IN"
-            theme={colors.primary}
-            customStyle={{width: '80%'}}
-            disabled={loader}
-            onPress={onLogInPressed}
-          />
-          {/* <View style={{marginTop: 25}}> */}
-          {loader && (
-            <ActivityIndicator
-              animating={loader}
-              color={colors.primary}
-              size="large"
-            />
-          )}
-          {/* </View> */}
-        </Card>
-      </View>
-    </TouchableWithoutFeedback>
+    <AuthContext.Consumer>
+      {({changeAuthState}) => (
+        <KeyboardAvoidingView
+          style={{flex: 1, backgroundColor: '#fff'}}
+          behavior={'height'}>
+          <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+            <ScrollView keyboardShouldPersistTaps="handled">
+              <View style={styles.container}>
+                <Headline>Let's get started</Headline>
+                <Card styling={styles.formWrapper} wrapper>
+                  <Input
+                    value={fieldValues.username}
+                    error={errors.username}
+                    label="Username"
+                    name="username"
+                    customStyle={{width: '90%', height: 30}}
+                    onFieldChange={onFieldChange}
+                  />
+                  <Input
+                    password
+                    value={fieldValues.password}
+                    label="Password"
+                    error={errors.password}
+                    name="password"
+                    onFieldChange={onFieldChange}
+                  />
+                  <Button
+                    title="LOG IN"
+                    theme={colors.primary}
+                    customStyle={{width: '80%'}}
+                    disabled={loader}
+                    onPress={() => onLogInPressed(changeAuthState)}
+                  />
+                  {/* <View style={{marginTop: 25}}> */}
+                  {loader && (
+                    <ActivityIndicator
+                      animating={loader}
+                      color={colors.primary}
+                      size="large"
+                    />
+                  )}
+                  {/* </View> */}
+                </Card>
+              </View>
+            </ScrollView>
+          </TouchableWithoutFeedback>
+        </KeyboardAvoidingView>
+      )}
+    </AuthContext.Consumer>
   );
 };
 
