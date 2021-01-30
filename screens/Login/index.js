@@ -28,7 +28,7 @@ const styles = StyleSheet.create({
   },
   container: {
     width: '100%',
-    paddingTop: '25%',
+    paddingTop: '15%',
     height: '100%',
     display: 'flex',
     alignItems: 'center',
@@ -111,7 +111,9 @@ const Login = ({navigation}) => {
           <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
             <ScrollView keyboardShouldPersistTaps="handled">
               <View style={styles.container}>
-                <Headline>Let's get started</Headline>
+                <Headline style={{color: colors.text}}>
+                  Let's get started
+                </Headline>
                 <Card styling={styles.formWrapper} wrapper>
                   <Input
                     value={fieldValues.username}

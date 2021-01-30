@@ -125,12 +125,9 @@ const Entity = ({route, navigation}) => {
         if (typeof errors[`${name}`] === 'object') {
           const currentError = [...errors[`${name}`]];
           currentError[index] = undefined;
-          setErrors({
-            ...errors,
-            [name]: currentError,
-          });
+          errors[name] = currentError;
         } else {
-          setErrors({...errors, [name]: undefined});
+          errors[name] = undefined;
         }
       }
       if (typeof fields[`${name}`] === 'object') {
@@ -147,7 +144,7 @@ const Entity = ({route, navigation}) => {
         });
       }
     },
-    [fields, setFields, errors, setErrors],
+    [fields, setFields, errors, topLevelError],
   );
 
   const toggleFieldValue = useCallback(

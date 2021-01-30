@@ -37,8 +37,7 @@ const Button = ({
     style={
       customStyle ? {...styles.buttonBody, ...customStyle} : styles.buttonBody
     }
-    compact={type === 'text'}
-    labelStyle={{fontSize: 16}}
+    labelStyle={{fontSize: type === 'text' ? 12 : 14}}
     uppercase={false}
     disabled={disabled}
     mode={type || 'contained'}>
