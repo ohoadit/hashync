@@ -11,12 +11,12 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import api from '../../utils/api';
 import Card from '../../components/Card';
 import colors from '../../colors';
-import {ActivityIndicator, Colors} from 'react-native-paper';
+import {ActivityIndicator, Colors, IconButton} from 'react-native-paper';
 import Button from '../../components/Button';
 
 const formatDate = (value) => {
   const date = new Date(value);
-  return `${date.toDateString()} --- ${date.toLocaleTimeString()}`;
+  return `${date.toDateString()} - ${date.toLocaleTimeString()}`;
 };
 const Dashboard = ({navigation, route}) => {
   const [data, setData] = useState([]);
@@ -49,7 +49,16 @@ const Dashboard = ({navigation, route}) => {
           </Text>
         </View>
         <View style={styles.cardActions}>
-          <Button title="Delete" />
+          <IconButton
+            icon="eye"
+            color={colors.primary}
+            onPress={openEntity(cardData.item._id)}
+          />
+          <IconButton
+            icon="delete"
+            color={colors.error}
+            onPress={() => console.log('Click handled')}
+          />
         </View>
       </Card>
     );
@@ -126,19 +135,25 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
   },
   card: {
-    padding: 15,
+    paddingHorizontal: 15,
+    paddingVertical: 25,
+    flexDirection: 'row',
     backgroundColor: '#f5f6f7',
-    alignItems: 'flex-start',
-    elevation: 4,
+    justifyContent: 'space-between',
+    elevation: 5,
   },
   cardData: {
+    width: '70%',
     flex: 1,
-    width: '60%',
+    flexDirection: 'column',
+    justifyContent: 'flex-start',
   },
   cardActions: {
-    flex: 1,
-    width: '40%',
+    width: '30%',
+    display: 'flex',
     flexDirection: 'row',
+    justifyContent: 'flex-end',
+    alignItems: 'center',
   },
   timestamp: {
     marginTop: 10,
@@ -146,7 +161,6 @@ const styles = StyleSheet.create({
     color: colors.text,
   },
   cardTitle: {
-    flex: 1,
     fontSize: 16,
     color: Colors.deepPurpleA700,
   },

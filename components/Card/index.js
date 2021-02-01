@@ -1,5 +1,5 @@
 import React from 'react';
-import {Pressable, StyleSheet} from 'react-native';
+import {View, Pressable, StyleSheet, TouchableOpacity} from 'react-native';
 
 const styles = StyleSheet.create({
   card: {
