@@ -37,7 +37,6 @@ export default function App() {
   }, []);
 
   const setScreens = useCallback(() => {
-    console.log('Here');
     if (loader) {
       return (
         <Screen

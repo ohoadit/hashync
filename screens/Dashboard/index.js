@@ -36,10 +36,7 @@ const Dashboard = ({navigation, route}) => {
   const renderCards = (cardData) => {
     // console.log(cardData);
     return (
-      <Card
-        styling={styles.card}
-        onPress={openEntity(cardData.item._id)}
-        wrapper>
+      <Card styling={styles.card} onPress={openEntity(cardData.item._id)}>
         <View style={styles.cardData}>
           <Text style={styles.cardTitle} numberOfLines={1}>
             {cardData.item.title}

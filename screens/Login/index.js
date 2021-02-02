@@ -21,7 +21,6 @@ import {ScrollView} from 'react-native-gesture-handler';
 const styles = StyleSheet.create({
   formWrapper: {
     width: '80%',
-    backgroundColor: '#fff',
     // display: 'flex',
     // flexDirection: 'column',
     // alignItems: 'center',
@@ -32,7 +31,6 @@ const styles = StyleSheet.create({
     height: '100%',
     display: 'flex',
     alignItems: 'center',
-    backgroundColor: '#fff',
   },
 });
 

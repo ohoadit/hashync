@@ -57,7 +57,7 @@ const styles = StyleSheet.create({
   },
   modalInput: {
     width: '90%',
-    fontSize: 14,
+    fontSize: 18,
     backgroundColor: 'transparent',
   },
 });
@@ -163,6 +163,7 @@ const Entity = ({route, navigation}) => {
     try {
       const result = await verifyAppKey(topLevelKey);
       if (result.data.msg === 'success') {
+        console.log(result.data);
         const tempSecrets = [...fields.secrets];
         const required = JSON.parse(tempSecrets[activeFieldIndex.current]);
         const hash = await crypto.pbkdf2(
@@ -412,7 +413,9 @@ const Entity = ({route, navigation}) => {
               />
               <Input
                 password={
-                  mode === 'VIEW' ? activeFieldIndex.current !== 0 : true
+                  mode === 'VIEW' && !modal
+                    ? activeFieldIndex.current !== 0
+                    : true
                 }
                 value={fields.secrets[0]}
                 label={

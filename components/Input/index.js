@@ -10,10 +10,9 @@ const styles = StyleSheet.create({
     marginVertical: 7,
   },
   input: {
-    fontSize: 18,
-    height: 75,
+    fontSize: 16,
     color: '#404b69',
-    backgroundColor: '#fff',
+    backgroundColor: 'transparent',
   },
 });
 

@@ -1,5 +1,5 @@
 import React from 'react';
-import {View, Pressable, StyleSheet, TouchableOpacity} from 'react-native';
+import {Pressable, StyleSheet} from 'react-native';
 
 const styles = StyleSheet.create({
   card: {
@@ -7,7 +7,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: 5,
-    backgroundColor: '#fff',
+    backgroundColor: '#fafafa',
     marginTop: 30,
     marginBottom: 10,
     marginHorizontal: 20,
